@@ -30,6 +30,7 @@ func (c *Cache) Get(key string) (int, bool) {
 	if !ok {
 		return 0, false
 	}
+	c.order.MoveToFront(element)
 	return element.Value.(*entry).value, true
 }
 
@@ -42,7 +43,7 @@ func (c *Cache) Put(key string, value int) {
 	}
 	element := c.order.PushFront(&entry{key: key, value: value})
 	c.items[key] = element
-	for len(c.items) > c.capacity && c.order.Len() > 1 {
+	for len(c.items) > c.capacity {
 		c.removeOldest()
 	}
 }
@@ -58,9 +59,11 @@ func (c *Cache) removeOldest() {
 
 // Delete 删除键，返回是否删掉了东西。
 func (c *Cache) Delete(key string) bool {
-	if _, ok := c.items[key]; !ok {
+	element, ok := c.items[key]
+	if !ok {
 		return false
 	}
+	c.order.Remove(element)
 	delete(c.items, key)
 	return true
 }
